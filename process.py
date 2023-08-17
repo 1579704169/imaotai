@@ -21,6 +21,14 @@ AMAP_KEY = '56e17ccbfc406a0840b7a504819523ce'
 
 CURRENT_TIME = str(int(time.time() * 1000))
 headers = {}
+
+
+def check_response(responses: requests.Response):
+    if responses.status_code != 200:
+        send_email('预约失败，请查看日志')
+        raise RuntimeError
+
+
 # mt_version = "".join(re.findall('new__latest__version">(.*?)</p>',
 #                                 requests.get('https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450').text,
 #                                 re.S)).replace('版本 ', '')
@@ -29,6 +37,7 @@ def get_mt_version():
     # apple商店 i茅台 url
     apple_imaotai_url = "https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450"
     response = requests.get(apple_imaotai_url)
+    check_response(response)
     html = response.content
     tml_doc = str(html, 'utf-8')  # html_doc=html.decode("utf-8","ignore")
     soup = BeautifulSoup(tml_doc, "html.parser")
@@ -99,6 +108,7 @@ def get_vcode(mobile: str):
     dict.update(params, {'md5': md5, "timestamp": CURRENT_TIME, 'MT-APP-Version': mt_version})
     responses = requests.post("https://app.moutai519.com.cn/xhr/front/user/register/vcode", json=params,
                               headers=headers)
+    check_response(responses)
     if responses.status_code != 200:
         logging.info(
             f'get v_code : params : {params}, response code : {responses.status_code}, response body : {responses.text}')
@@ -121,6 +131,7 @@ def login(mobile: str, v_code: str):
 def get_current_session_id():
     day_time = int(time.mktime(datetime.date.today().timetuple())) * 1000
     responses = requests.get(f"https://static.moutai519.com.cn/mt-backend/xhr/front/mall/index/session/get/{day_time}")
+    check_response(responses)
     if responses.status_code != 200:
         logging.warning(
             f'get_current_session_id : params : {day_time}, response code : {responses.status_code}, response body : {responses.text}')
@@ -139,6 +150,7 @@ def get_location_count(province: str,
     session_id = headers['current_session_id']
     responses = requests.get(
         f"https://static.moutai519.com.cn/mt-backend/xhr/front/mall/shop/list/slim/v3/{session_id}/{province}/{item_code}/{day_time}")
+    check_response(responses)
     if responses.status_code != 200:
         logging.warning(
             f'get_location_count : params : {day_time}, response code : {responses.status_code}, response body : {responses.text}')
@@ -252,9 +264,13 @@ def reservation(params: dict, mobile: str):
     params.pop('userId')
     responses = requests.post("https://app.moutai519.com.cn/xhr/front/mall/reservation/add", json=params,
                               headers=headers)
-    if responses.text.__contains__('bad token'):
-        send_email(f'[{mobile}],登录token失效，需要重新登录')
+    check_response(responses)
+    if responses.status_code != 200:
+        send_email(f'[{mobile}],预约失败，请查看日志')
         raise RuntimeError
+    # if responses.text.__contains__('bad token'):
+    #     send_email(f'[{mobile}],登录token失效，需要重新登录')
+    #     raise RuntimeError
     logging.info(
         f'预约 : mobile:{mobile} :  response code : {responses.status_code}, response body : {responses.text}')
 
