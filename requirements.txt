@@ -2,3 +2,5 @@ requests~=2.30.0
 urllib3<=1.25
 pycryptodome==3.17
 geopy~=2.3.0
+pycryptodome==3.17
+beautifulsoup4~=4.12.2

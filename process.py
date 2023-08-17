@@ -4,7 +4,7 @@ import random
 import re
 import time
 from email.mime.text import MIMEText
-
+from bs4 import BeautifulSoup
 import config
 from encrypt import Encrypt
 import requests
@@ -17,14 +17,30 @@ AES_KEY = 'qbhajinldepmucsonaaaccgypwuvcjaa'
 AES_IV = '2018534749963515'
 SALT = '2af72f100c356273d46284f6fd1dfc08'
 
-AMAP_KEY = '9449339b6c4aee04d69481e6e6c84a84'
+AMAP_KEY = '56e17ccbfc406a0840b7a504819523ce'
 
 CURRENT_TIME = str(int(time.time() * 1000))
 headers = {}
-mt_version = "".join(re.findall('new__latest__version">(.*?)</p>',
-                                requests.get('https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450').text,
-                                re.S)).replace('版本 ', '')
+# mt_version = "".join(re.findall('new__latest__version">(.*?)</p>',
+#                                 requests.get('https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450').text,
+#                                 re.S)).replace('版本 ', '')
+# 用bs获取指定的class更稳定，之前的正则可能需要经常改动
+def get_mt_version():
+    # apple商店 i茅台 url
+    apple_imaotai_url = "https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450"
+    response = requests.get(apple_imaotai_url)
+    html = response.content
+    tml_doc = str(html, 'utf-8')  # html_doc=html.decode("utf-8","ignore")
+    soup = BeautifulSoup(tml_doc, "html.parser")
+    elements = soup.find_all(class_="whats-new__latest__version")
+    # 获取p标签内的文本内容
+    version_text = elements[0].text
+    # 这里先把没有直接替换“版本 ”，因为后面不知道空格会不会在，所以先替换文字，再去掉前后空格
+    latest_mt_version = version_text.replace("版本", "").strip()
+    return latest_mt_version
 
+
+mt_version = get_mt_version()
 header_context = f'''
 MT-Lat: 28.499562
 MT-K: 1675213490331
@@ -190,7 +206,7 @@ encrypt = Encrypt(key=AES_KEY, iv=AES_IV)
 
 def act_params(shop_id: str, item_id: str):
     # {
-    #     "actParam": "a/v0XjWK/a/a+ZyaSlKKZViJHuh8tLw==",
+    #     "actParam": "a/v0XjWK/a/a+ZyaSlKKZViJHuh8tLw==",4
     #     "itemInfoList": [
     #         {
     #             "count": 1,
