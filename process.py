@@ -258,6 +258,22 @@ def send_email(msg: str):
 
     smtp.sendmail(config.EMAIL_SENDER_USERNAME, config.EMAIL_RECEIVER, message.as_string())
     smtp.quit()
+    if config.SEND_KEY is not None:
+        url = 'https://sctapi.ftqq.com/' + config.SEND_KEY + '.send'
+        data = {
+            'title': message['Subject'],
+            'desp': msg
+        }
+        response = json.dumps(requests.post(
+            url, data).json(), ensure_ascii=False)
+        datas = json.loads(response)
+        # print(datas)
+        if datas['code'] == 0:
+            print('\nserver酱发送通知消息成功\n')
+        elif datas['code'] == 40001:
+            print('\nPUSH_KEY 错误\n')
+        else:
+            print('\n发送通知调用API失败！！\n')
 
 
 def reservation(params: dict, mobile: str):

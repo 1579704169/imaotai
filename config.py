@@ -20,7 +20,9 @@ SMTP_SERVER = "smtp." + EMAIL_SENDER_USERNAME.split("@")[1]
 # 发件人邮箱服务器端口
 SMTP_PORT = 25
 # 收件人邮箱
-EMAIL_RECEIVER = EMAIL_SENDER_USERNAME
+EMAIL_RECEIVER = ""
+# Server酱通知
+SEND_KEY = ""
 ########################
 
 # 预约规则配置
